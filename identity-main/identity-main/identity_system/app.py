@@ -98,7 +98,7 @@ def is_valid_transition(current_status, new_status, status_changed_at=None):
 def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
-    # base table
+    # base table (email not unique to allow student+faculty addresses)
     cur.execute('''CREATE TABLE IF NOT EXISTS People (
                     id TEXT PRIMARY KEY,
                     type TEXT,
@@ -109,11 +109,29 @@ def init_db():
                     place_of_birth TEXT,
                     nationality TEXT,
                     gender TEXT,
-                    email TEXT UNIQUE,
+                    email TEXT,
                     phone TEXT,
                     status TEXT,
                     status_changed_at TEXT
                 )''')
+    # if the table existed with a UNIQUE constraint on email, drop the index
+    # so we can insert duplicates. SQLite creates an index for UNIQUE columns.
+    cur.execute("PRAGMA index_list('People')")
+    indexes = cur.fetchall()
+    for idx in indexes:
+        # idx tuple: (seq, name, unique, origin, partial)
+        name = idx[1]
+        unique_flag = idx[2]
+        if unique_flag:
+            # check what columns this index covers
+            cur.execute(f"PRAGMA index_info('{name}')")
+            cols = [row[2] for row in cur.fetchall()]
+            if 'email' in cols:
+                try:
+                    cur.execute(f"DROP INDEX {name}")
+                    print(f"Dropped unique index {name} on email")
+                except Exception:
+                    pass
     
     # Common Data columns (already in base table)
     # No need to add them again
@@ -328,15 +346,28 @@ def validate_user_data(data):
     if email and not re.match(email_regex, email):
         errors.append("Invalid email format")
     
-    # Check if email is not duplicate
+    # Check if email is not duplicate, with exception for student↔faculty dual accounts
     if email:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM People WHERE email=? COLLATE NOCASE", (email.lower(),))
-        count = cur.fetchone()[0]
+        cur.execute("SELECT sub_category FROM People WHERE email=? COLLATE NOCASE", (email.lower(),))
+        rows = cur.fetchall()
         conn.close()
-        if count > 0:
-            errors.append("Email already exists")
+        if rows:
+            existing = [r['sub_category'] for r in rows]
+            # if any existing record matches this category exactly, reject
+            if sub_cat in existing:
+                errors.append("Email already exists for this category")
+            else:
+                # allow only if one side is student and the other is faculty
+                student_subs = ['Undergraduate', 'Continuing Education', 'PhD Candidates', 'International/Exchange']
+                faculty_subs = ['Tenured', 'Adjunct/Part-time', 'Visiting Researchers']
+                is_student = sub_cat in student_subs
+                is_faculty = sub_cat in faculty_subs
+                has_student = any(s in student_subs for s in existing)
+                has_faculty = any(s in faculty_subs for s in existing)
+                if not ((is_student and has_faculty) or (is_faculty and has_student)):
+                    errors.append("Email already exists")
     
     # Check phone number (numbers only)
     phone = str(data.get('phone', '')).strip()
