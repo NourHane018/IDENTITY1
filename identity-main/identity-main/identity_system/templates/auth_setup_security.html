@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Security Questions - University System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 25px;
+            max-width: 550px;
+            width: 100%;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .question-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .question-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>❓ Security Questions</h2>
+        <p class="subtitle">Choose and answer two security questions</p>
+        
+        <form method="POST" action="/auth/setup_security">
+            <div class="question-card">
+                <h3>Question 1</h3>
+                <div class="form-group">
+                    <label>Select a question</label>
+                    <select name="question1" required>
+                        <option value="">Select a question...</option>
+                        {% for q in questions %}
+                        <option value="{{ q }}">{{ q }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your answer</label>
+                    <input type="text" name="answer1" required placeholder="Enter your answer">
+                </div>
+            </div>
+            
+            <div class="question-card">
+                <h3>Question 2</h3>
+                <div class="form-group">
+                    <label>Select a different question</label>
+                    <select name="question2" required>
+                        <option value="">Select a question...</option>
+                        {% for q in questions %}
+                        <option value="{{ q }}">{{ q }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your answer</label>
+                    <input type="text" name="answer2" required placeholder="Enter your answer">
+                </div>
+            </div>
+            
+            <button type="submit" class="btn">Save Security Questions</button>
+        </form>
+    </div>
+    
+    <script>
+        const q1Select = document.querySelector('select[name="question1"]');
+        const q2Select = document.querySelector('select[name="question2"]');
+        
+        function updateOptions() {
+            const q1Value = q1Select.value;
+            const q2Value = q2Select.value;
+            
+            for (let i = 0; i < q2Select.options.length; i++) {
+                const opt = q2Select.options[i];
+                if (opt.value === q1Value && opt.value !== '') {
+                    opt.disabled = true;
+                    if (q2Value === q1Value) q2Select.value = '';
+                } else {
+                    opt.disabled = false;
+                }
+            }
+            
+            for (let i = 0; i < q1Select.options.length; i++) {
+                const opt = q1Select.options[i];
+                if (opt.value === q2Value && opt.value !== '') {
+                    opt.disabled = true;
+                    if (q1Value === q2Value) q1Select.value = '';
+                } else {
+                    opt.disabled = false;
+                }
+            }
+        }
+        
+        q1Select.addEventListener('change', updateOptions);
+        q2Select.addEventListener('change', updateOptions);
+    </script>
+</body>
+</html>

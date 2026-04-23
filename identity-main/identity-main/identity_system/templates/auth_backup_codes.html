@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backup Codes - University System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 25px;
+            max-width: 550px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .warning {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .codes-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 25px 0;
+        }
+        
+        .code-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 40px;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #718096;
+        }
+        
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+        
+        .note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            padding: 12px;
+            background: #e6f7ff;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px;
+            }
+            
+            .codes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔑 Backup Codes</h2>
+        <p class="subtitle">Save these backup codes in a secure place</p>
+        
+        <div class="warning">
+            ⚠️ <strong>Important:</strong> Each code can only be used once. Keep them safe!
+        </div>
+        
+        <div class="codes-grid">
+            {% for code in backup_codes %}
+            <div class="code-item">{{ code }}</div>
+            {% endfor %}
+        </div>
+        
+        <div>
+            <button class="btn" onclick="window.print()">🖨️ Print Codes</button>
+            <a href="/auth/security_dashboard" class="btn btn-secondary">✓ Done</a>
+        </div>
+        
+        <div class="note">
+            💡 <strong>Tip:</strong> Store these codes in a password manager or print them.
+        </div>
+    </div>
+    
+    <script>
+        window.onbeforeunload = function() {
+            return "Please save your backup codes before leaving!";
+        };
+        
+        document.querySelector('.btn-secondary').addEventListener('click', function() {
+            window.onbeforeunload = null;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Dashboard - University System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .nav a {
+            text-decoration: none;
+            color: #666;
+            margin-left: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+        
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9ecef;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-item {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 6px;
+        }
+        
+        .auth-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .level-L1 { background: #d1fae5; color: #059669; }
+        .level-L2 { background: #dbeafe; color: #1e40af; }
+        .level-L3 { background: #fed7aa; color: #9c4221; }
+        .level-L4 { background: #fed7d7; color: #c53030; }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        th {
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        td {
+            font-size: 13px;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .success { color: #059669; font-weight: bold; }
+        .failure { color: #dc2626; font-weight: bold; }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Security Dashboard</h1>
+            <div class="nav">
+                <a href="/">🏠 Home</a>
+                <a href="/view_all">👥 View All</a>
+                <a href="/search">🔍 Search</a>
+                {% if user_type == 'IT Admin' %}
+                    <a href="/admin/auth/dashboard" style="background: #e53e3e; color: white;">👑 Admin</a>
+                {% endif %}
+                <a href="/auth/logout">🚪 Logout</a>
+            </div>
+        </div>
+        
+        <!-- Current Authentication Level -->
+        <div class="card">
+            <h2>🔒 Current Authentication Level</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Your Security Level</div>
+                    <div class="info-value">
+                        <span class="auth-level level-{{ auth_info.auth_level }}">
+                            {{ auth_info.auth_level }} - 
+                            {% if auth_info.auth_level == 'L1' %}Basic
+                            {% elif auth_info.auth_level == 'L2' %}Standard
+                            {% elif auth_info.auth_level == 'L3' %}High
+                            {% elif auth_info.auth_level == 'L4' %}Critical
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Password Age and Last Change -->
+        <div class="card">
+            <h2>⏰ Password Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Last Password Change</div>
+                    <div class="info-value">
+                        {{ auth_info.password_changed_at[:19] if auth_info.password_changed_at else 'Never' }}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Password Age</div>
+                    <div class="info-value">
+                        {% if password_age %}
+                            {{ password_age }}
+                        {% else %}
+                            First login - please set your password
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login History Timeline -->
+        <div class="card">
+            <h2>🕐 Login History Timeline</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                            <th>MFA Used</th>
+                            <th>Auth Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for h in history %}
+                        <tr>
+                            <td>{{ h.login_time[:19] if h.login_time else '-' }}</td>
+                            <td>{{ h.ip_address }}</td>
+                            <td class="{% if h.success %}success{% else %}failure{% endif %}">
+                                {% if h.success %}✓ Success{% else %}✗ {{ h.failure_reason }}{% endif %}
+                            </td>
+                            <td>{{ h.mfa_used or 'No' }}</td>
+                            <td>{{ h.auth_level_used or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">No login history found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

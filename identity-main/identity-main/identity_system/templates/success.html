@@ -1,129 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Identity Created Successfully</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Created - University System</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .success-card {
+            background: white;
+            border-radius: 25px;
+            max-width: 600px;
+            width: 100%;
+            padding: 45px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+        
         .success-icon {
-            font-size: 4rem;
-            color: #28a745;
-            margin-bottom: 1rem;
+            width: 85px;
+            height: 85px;
+            background: #48bb78;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+        }
+        
+        .success-icon span {
+            font-size: 48px;
+            color: white;
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 25px;
+            font-size: 15px;
+        }
+        
+        .info-box {
+            background: #f7fafc;
+            border-radius: 16px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: left;
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 18px;
+            font-size: 18px;
+        }
+        
+        .info-row {
+            padding: 12px 15px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #667eea;
+            text-transform: uppercase;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            color: #2d3748;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        
+        .temp-password {
+            background: #fff5e6;
+            border-left-color: #ed8936;
+        }
+        
+        .temp-password .info-value {
+            font-family: monospace;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ed8936;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .steps-box {
+            background: #e6f7ff;
+            border-radius: 16px;
+            padding: 20px 25px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .steps-box h3 {
+            color: #3182ce;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .steps-box ol {
+            margin-left: 20px;
+            color: #4a5568;
+        }
+        
+        .steps-box li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+        
+        .warning {
+            background: #fef3c7;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #d97706;
+        }
+        
+        @media (max-width: 640px) {
+            .success-card {
+                padding: 25px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
-
-<body class="bg-light">
-<div class="container mt-5">
-    <div class="card shadow p-4">
+<body>
+    <div class="success-card">
+        <div class="success-icon"><span>✓</span></div>
+        <h1>Identity Created Successfully!</h1>
+        <p class="subtitle">Your university account has been registered</p>
         
-        <div class="text-center">
-            <div class="success-icon">
-                ✓
+        <div class="info-box">
+            <h3>📋 Account Information</h3>
+            <div class="info-row">
+                <div class="info-label">University ID</div>
+                <div class="info-value"><strong>{{ uid }}</strong></div>
             </div>
-            <h2 class="mb-4 text-success">Identity Created Successfully!</h2>
-        </div>
-
-        <div class="alert alert-success" role="alert">
-            <h5 class="alert-heading">Identity ID</h5>
-            <p class="mb-0 fs-5"><strong>{{ uid }}</strong></p>
-        </div>
-
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Identity Type:</h6>
-                <p class="card-text"><strong>{{ identity_type }}</strong></p>
+            <div class="info-row">
+                <div class="info-label">Full Name</div>
+                <div class="info-value">{{ first_name }} {{ last_name }}</div>
             </div>
-        </div>
-
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Full Name:</h6>
-                <p class="card-text"><strong>{{ first_name }} {{ last_name }}</strong></p>
+            <div class="info-row">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ email }}</div>
             </div>
-        </div>
-
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Email Address:</h6>
-                <p class="card-text"><strong>{{ email }}</strong></p>
+            <div class="info-row">
+                <div class="info-label">User Type</div>
+                <div class="info-value">{{ identity_type }} - {{ sub_category }}</div>
+            </div>
+            <div class="info-row temp-password">
+                <div class="info-label">Temporary Password</div>
+                <div class="info-value">{{ temp_password }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Status</div>
+                <div class="info-value"><span class="status-badge">{{ status }}</span></div>
             </div>
         </div>
-
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Status:</h6>
-                <p class="card-text">
-                    <span class="badge bg-warning">{{ status }}</span>
-                </p>
-            </div>
+        
+        <div class="steps-box">
+            <h3>📌 Next Steps</h3>
+            <ol>
+                <li><strong>Save your temporary password</strong> - you'll need it to login</li>
+                <li>Click <strong>"Login Now"</strong> below</li>
+                <li>Enter your email and the temporary password</li>
+                <li><strong>Change your password</strong> immediately when prompted</li>
+                <li>Choose a strong password that meets the security requirements</li>
+            </ol>
         </div>
-
-        {% if national_id %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">National ID:</h6>
-                <p class="card-text"><strong>{{ national_id }}</strong></p>
-            </div>
+        
+        <div class="btn-group">
+            <a href="/auth/login" class="btn btn-primary">🔐 Login Now</a>
+            <a href="/" class="btn btn-secondary">🏠 Back to Home</a>
         </div>
-        {% endif %}
-        {% if entry_year %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Entry Year:</h6>
-                <p class="card-text"><strong>{{ entry_year }}</strong></p>
-            </div>
+        
+        <div class="warning">
+            ⚠️ <strong>Important:</strong> A confirmation email has been sent to your inbox.
         </div>
-        {% endif %}
-        {% if faculty_rank %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Faculty Rank:</h6>
-                <p class="card-text"><strong>{{ faculty_rank }}</strong></p>
-            </div>
-        </div>
-        {% endif %}
-        {% if primary_department %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Primary Department:</h6>
-                <p class="card-text"><strong>{{ primary_department }}</strong></p>
-            </div>
-        </div>
-        {% endif %}
-        {% if staff_department %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Staff Department:</h6>
-                <p class="card-text"><strong>{{ staff_department }}</strong></p>
-            </div>
-        </div>
-        {% endif %}
-        {% if job_title %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Job Title:</h6>
-                <p class="card-text"><strong>{{ job_title }}</strong></p>
-            </div>
-        </div>
-        {% endif %}
-        {% if staff_entry_date %}
-        <div class="card mb-4 bg-light">
-            <div class="card-body">
-                <h6 class="card-title">Staff Entry Date:</h6>
-                <p class="card-text"><strong>{{ staff_entry_date }}</strong></p>
-            </div>
-        </div>
-        {% endif %}
-
-
-        <div class="text-center mt-4">
-            <a href="/view/{{ uid }}" class="btn btn-primary me-2">View Details</a>
-            <a href="/view_all" class="btn btn-info me-2">View All Identities</a>
-            <a href="/" class="btn btn-secondary">Back to Home</a>
-        </div>
-
     </div>
-</div>
 </body>
 </html>

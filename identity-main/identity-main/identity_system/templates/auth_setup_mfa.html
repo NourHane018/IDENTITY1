@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup MFA - University System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 25px;
+            max-width: 550px;
+            width: 100%;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .mfa-option {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .mfa-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .mfa-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .mfa-icon {
+            font-size: 40px;
+            margin-bottom: 15px;
+        }
+        
+        .mfa-option h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .mfa-option p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .info-box {
+            background: #e6f7ff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📱 Setup Multi-Factor Authentication</h2>
+        <p class="subtitle">Enhance your account security</p>
+        
+        <div class="info-box">
+            💡 <strong>Note:</strong> Adding MFA methods will upgrade your authentication level:
+            <ul style="margin-top: 10px; margin-left: 20px;">
+                <li>Add TOTP → Upgrade to L3 (High)</li>
+                {% if user_type == 'IT Admin' %}
+                <li>Add Security Questions (IT Admin only) → Upgrade to L4 (Critical)</li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <form method="POST" id="mfaForm">
+            <div class="mfa-option" data-method="totp" onclick="selectMethod('totp')">
+                <div class="mfa-icon">📱</div>
+                <h3>Authenticator App (TOTP)</h3>
+                <p>Use Google Authenticator or any TOTP app to generate 6-digit codes.</p>
+                <small>✓ Upgrades you to L3 (High security)</small>
+            </div>
+            
+            {% if user_type == 'IT Admin' %}
+            <div class="mfa-option" data-method="security_question" onclick="selectMethod('security_question')">
+                <div class="mfa-icon">❓</div>
+                <h3>Security Questions</h3>
+                <p>Set up security questions to verify your identity.</p>
+                <small>✓ Upgrades you to L4 (Critical security)</small>
+            </div>
+            {% endif %}
+            
+            <input type="hidden" name="method" id="selectedMethod" value="">
+            <button type="submit" class="btn" id="continueBtn" disabled>Continue</button>
+        </form>
+        
+        <a href="/auth/security_dashboard" class="back-link">← Back to Security Dashboard</a>
+    </div>
+    
+    <script>
+        let selected = null;
+        
+        function selectMethod(method) {
+            selected = method;
+            document.getElementById('selectedMethod').value = method;
+            
+            document.querySelectorAll('.mfa-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+            
+            document.getElementById('continueBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>

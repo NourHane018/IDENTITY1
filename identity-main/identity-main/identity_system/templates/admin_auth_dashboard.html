@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - University System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .nav a {
+            text-decoration: none;
+            color: #666;
+            margin-left: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+        
+        .nav a:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9ecef;
+            font-size: 20px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        th {
+            background: #f8f9fa;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-locked { background: #fed7d7; color: #c53030; }
+        .status-active { background: #d1fae5; color: #059669; }
+        
+        .btn-unlock {
+            background: #48bb78;
+            color: white;
+            padding: 4px 12px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .btn-unlock:hover {
+            background: #38a169;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: #ed8936;
+        }
+        
+        .btn-warning:hover {
+            background: #dd6b20;
+        }
+        
+        .btn-success {
+            background: #48bb78;
+        }
+        
+        .btn-success:hover {
+            background: #38a169;
+        }
+        
+        .upgrade-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .upgrade-section h2 {
+            color: white;
+            border-bottom-color: rgba(255,255,255,0.3);
+        }
+        
+        .upgrade-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .success { color: #059669; font-weight: bold; }
+        .failure { color: #dc2626; font-weight: bold; }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👑 Admin Authentication Dashboard</h1>
+            <div class="nav">
+                <a href="/">🏠 Home</a>
+                <a href="/auth/security_dashboard">🔐 Security</a>
+                <a href="/admin/auth/login_history">📊 Login History</a>
+                <a href="/auth/logout">🚪 Logout</a>
+            </div>
+        </div>
+        
+        <!-- Upgrade Section for IT Admin (TOTP & Security Questions) -->
+        <div class="card upgrade-section">
+            <h2>🔐 Upgrade Your Security (IT Admin)</h2>
+            <div class="upgrade-buttons">
+                <a href="/auth/setup_mfa" class="btn btn-warning">click here</a>
+            </div>
+            <div style="margin-top: 15px; font-size: 13px; opacity: 0.9;">
+                💡 <strong>Note:</strong> Setting up TOTP and Security Questions will upgrade your level to L4 (Critical)
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📊 Users Authentication Status</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Auth Level</th>
+                            <th>MFA</th>
+                            <th>Failed Attempts</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.person_id }}</td>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.type }}</td>
+                            <td><strong>{{ user.auth_level }}</strong></td>
+                            <td>{{ '✅ Enabled' if user.mfa_enabled else '❌ Disabled' }}</td>
+                            <td>{{ user.failed_attempts }}</td>
+                            <td>
+                                {% if user.locked_until %}
+                                    <span class="status-badge status-locked">Locked</span>
+                                {% else %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.locked_until %}
+                                    <button class="btn-unlock" onclick="unlockAccount('{{ user.person_id }}')">Unlock</button>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🕐 Recent Login Attempts</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                            <th>MFA Used</th>
+                            <th>Auth Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in recent_attempts %}
+                        <tr>
+                            <td>{{ attempt.login_time[:19] if attempt.login_time else '-' }}</td>
+                            <td>{{ attempt.first_name }} {{ attempt.last_name }}</td>
+                            <td>{{ attempt.email }}</td>
+                            <td>{{ attempt.ip_address }}</td>
+                            <td class="{% if attempt.success %}success{% else %}failure{% endif %}">
+                                {% if attempt.success %}✓ Success{% else %}✗ {{ attempt.failure_reason }}{% endif %}
+                            </td>
+                            <td>{{ attempt.mfa_used or 'No' }}</td>
+                            <td>{{ attempt.auth_level_used or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>📋 Authentication Audit Log</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>IP Address</th>
+                            <th>Result</th>
+                            <th>Reason</th>
+                            <th>MFA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_log %}
+                        <tr>
+                            <td>{{ log.login_time[:19] if log.login_time else '-' }}</td>
+                            <td>{{ log.first_name }} {{ log.last_name }}</td>
+                            <td>{{ log.email }}</td>
+                            <td>{{ log.ip_address }}</td>
+                            <td class="{% if log.success %}success{% else %}failure{% endif %}">
+                                {% if log.success %}Success{% else %}Failed{% endif %}
+                            </td>
+                            <td>{{ log.failure_reason or '-' }}</td>
+                            <td>{{ log.mfa_used or 'No' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function unlockAccount(personId) {
+            if (confirm('Are you sure you want to unlock this account?')) {
+                fetch(`/admin/auth/unlock/${personId}`, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Failed to unlock account');
+                        }
+                    });
+            }
+        }
+    </script>
+</body>
+</html>

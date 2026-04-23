@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Two-Factor Authentication</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .mfa-container {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 32px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .mfa-header { text-align: center; margin-bottom: 28px; }
+        .mfa-header h2 { color: #667eea; margin-bottom: 8px; font-size: 26px; }
+        .mfa-header p { color: #666; font-size: 14px; }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            position: relative;
+            padding: 0 8px;
+        }
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 1;
+        }
+        .step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            flex: 1;
+        }
+        .step-circle {
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 6px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #999;
+        }
+        .step.completed .step-circle {
+            background: #48bb78;
+            border-color: #48bb78;
+            color: white;
+        }
+        .step.active .step-circle {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        .step-label { font-size: 10px; color: #666; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 20px;
+            text-align: center;
+            letter-spacing: 4px;
+            background: #fafafa;
+        }
+        .btn-verify {
+            width: 100%;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-verify:active { transform: scale(0.98); }
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .info-text {
+            background: #e6f7ff;
+            color: #3182ce;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .resend-link { text-align: center; margin-top: 20px; }
+        .resend-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            display: inline-block;
+        }
+        .countdown { text-align: center; margin-top: 12px; font-size: 12px; color: #666; }
+        .method-panel { display: none; }
+        .method-panel.active { display: block; }
+        @media (max-width: 480px) {
+            .mfa-container { padding: 24px 20px; }
+            .form-group input { font-size: 24px; padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="mfa-container">
+        <div class="mfa-header">
+            <h2>🔐 Two-Factor Authentication</h2>
+            <p>Verify your identity</p>
+        </div>
+        
+        {% if message %}
+        <div class="info-text">{{ message }}</div>
+        {% endif %}
+        
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+        
+        <!-- Progress Steps (بسيطة وتعتمد على completed و current_method) -->
+        <div class="progress-steps">
+            <div class="step {% if 'otp' in completed or 'email_otp' in completed %}completed{% elif not completed %}active{% endif %}">
+                <div class="step-circle">{% if 'otp' in completed or 'email_otp' in completed %}✓{% else %}1{% endif %}</div>
+                <div class="step-label">Email Code</div>
+            </div>
+            <div class="step {% if 'totp' in completed %}completed{% elif 'totp' == current_method %}active{% endif %}">
+                <div class="step-circle">{% if 'totp' in completed %}✓{% else %}2{% endif %}</div>
+                <div class="step-label">Authenticator</div>
+            </div>
+            <div class="step {% if 'security_question' in completed %}completed{% elif 'security_question' == current_method %}active{% endif %}">
+                <div class="step-circle">{% if 'security_question' in completed %}✓{% else %}3{% endif %}</div>
+                <div class="step-label">Security Q</div>
+            </div>
+        </div>
+        
+        <!-- لوحة OTP (للـ email_otp أو otp) -->
+        {% if current_method == 'otp' or current_method == 'email_otp' %}
+        <div id="otp-panel" class="method-panel active">
+            <form method="POST">
+                <input type="hidden" name="method" value="{{ current_method }}">
+                <div class="form-group">
+                    <label>📧 8-Digit Code from Email</label>
+                    <input type="text" name="code" placeholder="12345678" maxlength="8" autocomplete="off" required>
+                </div>
+                <button type="submit" class="btn-verify">Verify Code</button>
+            </form>
+            <div class="resend-link">
+                <a href="#" onclick="resendCode()">Didn't receive code? Resend</a>
+            </div>
+            <div class="countdown" id="countdown"></div>
+        </div>
+        {% endif %}
+        
+        <!-- لوحة TOTP -->
+        {% if current_method == 'totp' %}
+        <div id="totp-panel" class="method-panel active">
+            <form method="POST">
+                <input type="hidden" name="method" value="totp">
+                <div class="form-group">
+                    <label>📱 6-Digit Code from Authenticator App</label>
+                    <input type="text" name="code" placeholder="123456" maxlength="6" autocomplete="off" required>
+                </div>
+                <button type="submit" class="btn-verify">Verify Authenticator</button>
+            </form>
+            <div class="info-text" style="margin-top: 16px;">
+                Open Google Authenticator or your 2FA app on your computer/phone
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- لوحة السؤال الأمني -->
+        {% if current_method == 'security_question' %}
+        <div id="security-panel" class="method-panel active">
+            <form method="POST">
+                <input type="hidden" name="method" value="security_question">
+                <div class="form-group">
+                    <label>❓ Security Question</label>
+                    <select name="question" required>
+                        <option value="">Select a question...</option>
+                        {% for q in security_questions %}
+                        <option value="{{ q }}">{{ q }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Your Answer</label>
+                    <input type="text" name="answer" placeholder="Enter your answer" required>
+                </div>
+                <button type="submit" class="btn-verify">Verify Answer</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        let countdown = 60;
+        let timer;
+        function startCountdown() {
+            const countdownEl = document.getElementById('countdown');
+            if (!countdownEl) return;
+            if (timer) clearInterval(timer);
+            countdown = 60;
+            timer = setInterval(() => {
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    countdownEl.innerHTML = '';
+                } else {
+                    countdownEl.innerHTML = `New code available in ${countdown} seconds`;
+                    countdown--;
+                }
+            }, 1000);
+        }
+        function resendCode() {
+            const link = document.querySelector('.resend-link a');
+            link.style.pointerEvents = 'none';
+            link.style.opacity = '0.5';
+            link.innerHTML = 'Sending...';
+            fetch('/auth/resend_otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (timer) clearInterval(timer);
+                    countdown = 60;
+                    startCountdown();
+                    link.innerHTML = 'Code sent! Check your email';
+                    setTimeout(() => {
+                        link.innerHTML = 'Didn\'t receive code? Resend';
+                        link.style.pointerEvents = 'auto';
+                        link.style.opacity = '1';
+                    }, 3000);
+                } else {
+                    alert(data.error || 'Failed to resend code');
+                    link.innerHTML = 'Didn\'t receive code? Resend';
+                    link.style.pointerEvents = 'auto';
+                    link.style.opacity = '1';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to resend code');
+                link.innerHTML = 'Didn\'t receive code? Resend';
+                link.style.pointerEvents = 'auto';
+                link.style.opacity = '1';
+            });
+        }
+        startCountdown();
+    </script>
+</body>
+</html>

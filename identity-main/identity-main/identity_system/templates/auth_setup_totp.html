@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup TOTP - University System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 25px;
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+        
+        h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+        }
+        
+        .qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            display: inline-block;
+            border: 1px solid #e9ecef;
+        }
+        
+        .qr-code img {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .secret {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            letter-spacing: 1px;
+            margin: 15px 0;
+            word-break: break-all;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .steps {
+            text-align: left;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .steps ol {
+            margin-left: 20px;
+        }
+        
+        .steps li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📱 Setup TOTP Authentication</h2>
+        <p class="subtitle">Scan the QR code with Google Authenticator or similar app</p>
+        
+        <div class="qr-code">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+        </div>
+        
+        <div class="secret">
+            Secret Key: <strong>{{ secret }}</strong>
+        </div>
+        
+        <div class="steps">
+            <strong>📌 Instructions:</strong>
+            <ol>
+                <li>Download Google Authenticator or any TOTP app</li>
+                <li>Scan the QR code above or enter the secret key manually</li>
+                <li>Enter the 6-digit code from the app below to verify</li>
+            </ol>
+        </div>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" action="/auth/verify_totp">
+            <div class="form-group">
+                <input type="text" name="code" placeholder="Enter 6-digit code" maxlength="6" required autocomplete="off">
+            </div>
+            <button type="submit" class="btn">Verify & Enable TOTP</button>
+        </form>
+    </div>
+</body>
+</html>
