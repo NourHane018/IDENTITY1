@@ -1250,15 +1250,57 @@ def auth_setup_security():
 @admin_required
 def admin_auth_dashboard():
     with get_db_connection('auth.db') as conn_auth, get_db_connection() as conn_main:
+        # جلب بيانات المستخدمين للمسؤولين
         users = []
         for u in conn_auth.execute("SELECT person_id, username, auth_level, mfa_enabled, first_login, failed_attempts, locked_until FROM AuthUsers ORDER BY created_at DESC").fetchall():
             p = conn_main.execute("SELECT email, first_name, last_name, type FROM People WHERE id=?", (u['person_id'],)).fetchone()
             if p:
                 users.append({**dict(u), 'email': p['email'], 'first_name': p['first_name'], 'last_name': p['last_name'], 'type': p['type']})
-        attempts = conn_auth.execute("SELECT * FROM LoginHistory ORDER BY login_time DESC LIMIT 50").fetchall()
-        audit = conn_auth.execute("SELECT * FROM LoginHistory ORDER BY login_time DESC LIMIT 100").fetchall()
-    return render_template("admin_auth_dashboard.html", users=users, recent_attempts=attempts, audit_log=audit)
-
+        
+        # جلب محاولات الدخول الأخيرة (بدون JOIN)
+        attempts_rows = conn_auth.execute("SELECT * FROM LoginHistory ORDER BY login_time DESC LIMIT 50").fetchall()
+        recent_attempts = []
+        for att in attempts_rows:
+            # جلب اسم المستخدم من قاعدة البيانات الرئيسية إذا كان person_id موجود
+            user_info = {'first_name': '', 'last_name': '', 'email': ''}
+            if att['person_id']:
+                p = conn_main.execute("SELECT first_name, last_name, email FROM People WHERE id=?", (att['person_id'],)).fetchone()
+                if p:
+                    user_info = {'first_name': p['first_name'], 'last_name': p['last_name'], 'email': p['email']}
+            recent_attempts.append({
+                'login_time': att['login_time'],
+                'ip_address': att['ip_address'],
+                'success': att['success'],
+                'failure_reason': att['failure_reason'],
+                'mfa_used': att['mfa_used'],
+                'auth_level_used': att['auth_level_used'],
+                'first_name': user_info['first_name'],
+                'last_name': user_info['last_name'],
+                'email': user_info['email']
+            })
+        
+        # جلب سجل التدقيق بنفس الطريقة
+        audit_rows = conn_auth.execute("SELECT * FROM LoginHistory ORDER BY login_time DESC LIMIT 100").fetchall()
+        audit_log = []
+        for log in audit_rows:
+            user_info = {'first_name': '', 'last_name': '', 'email': ''}
+            if log['person_id']:
+                p = conn_main.execute("SELECT first_name, last_name, email FROM People WHERE id=?", (log['person_id'],)).fetchone()
+                if p:
+                    user_info = {'first_name': p['first_name'], 'last_name': p['last_name'], 'email': p['email']}
+            audit_log.append({
+                'login_time': log['login_time'],
+                'ip_address': log['ip_address'],
+                'success': log['success'],
+                'failure_reason': log['failure_reason'],
+                'mfa_used': log['mfa_used'],
+                'auth_level_used': log['auth_level_used'],
+                'first_name': user_info['first_name'],
+                'last_name': user_info['last_name'],
+                'email': user_info['email']
+            })
+        
+    return render_template("admin_auth_dashboard.html", users=users, recent_attempts=recent_attempts, audit_log=audit_log)
 @app.route('/admin/auth/unlock/<person_id>', methods=['POST'])
 @admin_required
 def admin_unlock_account(person_id):
