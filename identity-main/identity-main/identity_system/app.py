@@ -1,4 +1,4 @@
-# app.py - University Identity & Access Management System (Final Clean Version)
+# app.py - University Identity & Access Management System (Final Corrected)
 import sqlite3
 from datetime import datetime, timedelta
 import os, re, secrets, random, string, json, base64, io, smtplib
@@ -30,7 +30,7 @@ class AuthConfig:
     OTP_RATE_LIMIT = 5
     OTP_RESEND_COOLDOWN = 60
     OTP_MAX_ATTEMPTS = 5
-    TOTP_TIME_STEP = 30        # Fixed to 30 seconds for Google Authenticator compatibility
+    TOTP_TIME_STEP = 30
     TOTP_DIGITS = 6
     TOTP_BACKUP_CODES_COUNT = 10
     RESET_TOKEN_VALIDITY = 60
@@ -328,6 +328,9 @@ def generate_temporary_password():
     return ''.join(random.choices(chars, k=12))
 
 def is_valid_transition(current, new, changed_at=None):
+    # Treat None as 'Pending'
+    if current is None:
+        current = 'Pending'
     if current == new:
         return True
     if current not in IDConfig.VALID_TRANSITIONS or new not in IDConfig.VALID_TRANSITIONS[current]:
@@ -511,16 +514,21 @@ def log_authentication_event(person_id, session_id, ip, success, failure_reason=
     conn.commit()
     conn.close()
 
+# ======================== LEVEL MANAGEMENT ========================
 def get_user_auth_level(user_type, sub_category):
+    """Default level as per specification table"""
     if user_type == 'IT Admin':
-        return 'L2'   # Will be upgraded after MFA setup
+        return 'L2'   # IT Admin starts at L2, upgrades to L4 after MFA setup
     if user_type in ['Faculty', 'Admin Staff', 'Staff', 'Researcher']:
         return 'L2'
-    if user_type == 'Student' and sub_category == 'International/Exchange':
-        return 'L2'
+    if user_type == 'Student':
+        return 'L2' if sub_category == 'International/Exchange' else 'L1'
+    if user_type == 'Contractor':
+        return 'L1'
     return 'L1'
 
 def get_effective_auth_level(person_id):
+    """Actual level based on enabled MFA methods and special flags"""
     with get_db_connection('auth.db') as conn_auth, get_db_connection() as conn_main:
         user = conn_main.execute("SELECT type, sub_category, is_department_head, is_hr_payroll, contract_expiry_date FROM People WHERE id=?", (person_id,)).fetchone()
         if not user:
@@ -533,27 +541,20 @@ def get_effective_auth_level(person_id):
         has_email_otp = 'email_otp' in mfa_types
         has_security = conn_auth.execute("SELECT COUNT(*) FROM SecurityQuestions WHERE person_id=?", (person_id,)).fetchone()[0] >= 2
 
-        # Check contract expiry for contractors
+        # Contractor expiry check
         if user_type == 'Contractor' and contract_expiry:
-            expiry_date = datetime.fromisoformat(contract_expiry)
-            if datetime.now() > expiry_date:
+            if datetime.now() > datetime.fromisoformat(contract_expiry):
                 return 'L1'
 
-        # IT Admin
+        # IT Admin: L4 only if both TOTP and security questions are set
         if user_type == 'IT Admin':
-            if has_totp and has_security:
-                return 'L4'
-            else:
-                return 'L2'
+            return 'L4' if (has_totp and has_security) else 'L2'
 
         # Faculty, Admin Staff, Researchers
         if user_type in ['Faculty', 'Admin Staff', 'Staff', 'Researcher']:
             mandatory_l3 = (user_type == 'Faculty' and is_dept_head) or (user_type in ['Admin Staff', 'Staff'] and is_hr)
             if mandatory_l3:
-                if has_totp:
-                    return 'L3'
-                else:
-                    return 'L2'
+                return 'L3' if has_totp else 'L2'
             else:
                 if has_totp and has_security:
                     return 'L4'
@@ -567,19 +568,55 @@ def get_effective_auth_level(person_id):
             if sub_cat == 'International/Exchange':
                 return 'L2'
             else:
-                if has_email_otp:
-                    return 'L2'
-                else:
-                    return 'L1'
+                return 'L2' if has_email_otp else 'L1'
 
         # Contractors
         if user_type == 'Contractor':
-            if has_email_otp:
-                return 'L2'
-            else:
-                return 'L1'
+            return 'L2' if has_email_otp else 'L1'
 
         return 'L1'
+
+def get_next_upgrade_target(person_id):
+    """Determine next possible upgrade level and required MFA method"""
+    with get_db_connection() as conn:
+        user = conn.execute("SELECT type, sub_category, is_department_head, is_hr_payroll FROM People WHERE id=?", (person_id,)).fetchone()
+        if not user:
+            return None
+        user_type, sub_cat, is_dept_head, is_hr = user
+
+    current = get_effective_auth_level(person_id)
+
+    # IT Admin: from L2 to L4 requires both TOTP and security questions
+    if user_type == 'IT Admin':
+        if current == 'L2':
+            return {'target': 'L4', 'required_mfa': 'totp_and_security',
+                    'message': 'Set up TOTP and Security Questions to reach L4 (Critical security)'}
+        elif current == 'L3':   # has TOTP but no security
+            return {'target': 'L4', 'required_mfa': 'security_question',
+                    'message': 'Set up Security Questions to reach L4'}
+        return None
+
+    # Students (non-international)
+    if user_type == 'Student' and sub_cat != 'International/Exchange':
+        if current == 'L1':
+            return {'target': 'L2', 'required_mfa': 'email_otp',
+                    'message': 'Enable Email OTP to upgrade to L2'}
+
+    # Faculty, Admin Staff, Researchers
+    if user_type in ['Faculty', 'Admin Staff', 'Staff', 'Researcher']:
+        if current == 'L2':
+            return {'target': 'L3', 'required_mfa': 'totp',
+                    'message': 'Enable TOTP to upgrade to L3'}
+        elif current == 'L3':
+            return {'target': 'L4', 'required_mfa': 'security_question',
+                    'message': 'Set up Security Questions to upgrade to L4'}
+
+    # Contractors
+    if user_type == 'Contractor' and current == 'L1':
+        return {'target': 'L2', 'required_mfa': 'email_otp',
+                'message': 'Enable Email OTP to upgrade to L2'}
+
+    return None
 
 def upgrade_auth_level_if_needed(person_id):
     new_level = get_effective_auth_level(person_id)
@@ -673,12 +710,10 @@ def create():
             'is_department_head', 'is_hr_payroll', 'contract_expiry_date'
         ]
         values = [uid] + [data.get(field) for field in fields[1:]]
-        # Convert checkbox values to 0/1
         if 'is_department_head' in data:
             values[fields.index('is_department_head')] = 1 if data.get('is_department_head') == 'on' else 0
         if 'is_hr_payroll' in data:
             values[fields.index('is_hr_payroll')] = 1 if data.get('is_hr_payroll') == 'on' else 0
-        # Set status_changed_at
         values[fields.index('status_changed_at')] = now
         placeholders = ','.join(['?']*len(fields))
         conn.execute(f"INSERT INTO People ({','.join(fields)}) VALUES ({placeholders})", values)
@@ -729,7 +764,6 @@ def edit(uid):
                 conn.close()
                 return render_template("edit.html", person=person, error=f"Invalid status transition from {person['status']} to {new_status}")
             conn.execute("UPDATE People SET status=?, status_changed_at=? WHERE id=?", (new_status, datetime.now().isoformat(), uid))
-        # Update other fields (excluding immutable ones)
         for key in person.keys():
             if key not in ['id', 'status', 'status_changed_at', 'created_at'] and key in request.form:
                 new_val = request.form.get(key)
@@ -805,10 +839,9 @@ def auth_login():
                 return render_template("auth_login.html")
             pid, email, fname, lname, utype, subcat, is_dept_head, is_hr, contract_expiry = person
 
-            # Check contractor expiry
+            # Contractor expiry check
             if utype == 'Contractor' and contract_expiry:
-                expiry_date = datetime.fromisoformat(contract_expiry)
-                if datetime.now() > expiry_date:
+                if datetime.now() > datetime.fromisoformat(contract_expiry):
                     flash("Your contract has expired. Please contact administration.", "error")
                     return render_template("auth_login.html")
 
@@ -828,13 +861,30 @@ def auth_login():
             auth_level = auth[1]
             first_login = auth[2]
 
+            # ---------- MANDATORY LEVEL ENFORCEMENT (Per Table) ----------
+            # 1. International students must have L2 (email_otp)
+            if utype == 'Student' and subcat == 'International/Exchange':
+                has_otp = conn_auth.execute("SELECT COUNT(*) FROM MFASecrets WHERE person_id=? AND method_type='email_otp' AND verified=1", (pid,)).fetchone()[0] > 0
+                if not has_otp:
+                    flash("International students must enable Email OTP (L2). Please set up MFA.", "warning")
+                    session['temp_person_id'] = pid
+                    return redirect(url_for('auth_setup_mfa', method='otp'))
+            # 2. Department heads and HR/payroll staff must have L3 (TOTP)
+            if (utype == 'Faculty' and is_dept_head) or (utype in ['Admin Staff', 'Staff'] and is_hr):
+                has_totp = conn_auth.execute("SELECT COUNT(*) FROM MFASecrets WHERE person_id=? AND method_type='totp' AND verified=1", (pid,)).fetchone()[0] > 0
+                if not has_totp:
+                    flash("Department heads / HR staff must enable TOTP (L3). Please set up MFA.", "warning")
+                    session['temp_person_id'] = pid
+                    return redirect(url_for('auth_setup_mfa', method='totp'))
+
+            # Determine required MFA level
             required_level = get_effective_auth_level(pid)
             if required_level != 'L1':
                 session['mfa_person_id'] = pid
                 session['mfa_email'] = email
                 session['mfa_auth_level'] = auth_level
                 session['mfa_first_login'] = first_login
-                methods = AuthConfig.AUTH_LEVELS[required_level]['methods'][1:]
+                methods = AuthConfig.AUTH_LEVELS[required_level]['methods'][1:]  # exclude password
                 session['mfa_required_methods'] = methods
                 session['mfa_completed_steps'] = []
                 if 'email_otp' in methods:
@@ -843,6 +893,7 @@ def auth_login():
                     send_email(email, "Your OTP code", f"Code: {otp} (valid {AuthConfig.OTP_VALIDITY} minutes)")
                 return redirect(url_for('auth_mfa'))
 
+            # No MFA required (L1) – proceed with session
             sess_id = create_session(pid, auth_level, ip, ua, remember)
             log_authentication_event(pid, sess_id, ip, True, None, "No", auth_level)
             if first_login:
@@ -1041,22 +1092,45 @@ def auth_security_dashboard():
     sess = validate_session(sid)
     pid = sess[2]
     with get_db_connection() as conn_main, get_db_connection('auth.db') as conn_auth:
-        user = conn_main.execute("SELECT first_name, last_name, email, type FROM People WHERE id=?", (pid,)).fetchone()
+        user = conn_main.execute("SELECT first_name, last_name, email, type, sub_category, status, created_at FROM People WHERE id=?", (pid,)).fetchone()
         auth_info = conn_auth.execute("SELECT auth_level, password_changed_at, first_login, mfa_enabled FROM AuthUsers WHERE person_id=?", (pid,)).fetchone()
         mfa_methods = conn_auth.execute("SELECT method_type, verified FROM MFASecrets WHERE person_id=?", (pid,)).fetchall()
         history = conn_auth.execute("SELECT login_time, ip_address, success, failure_reason, mfa_used, auth_level_used FROM LoginHistory WHERE person_id=? ORDER BY login_time DESC LIMIT 20", (pid,)).fetchall()
-    return render_template("auth_security_dashboard.html", user=user, auth_info=auth_info, mfa_methods=mfa_methods, history=history)
+    # Calculate password age
+    password_age = None
+    if auth_info and auth_info['password_changed_at']:
+        last_change = datetime.fromisoformat(auth_info['password_changed_at'])
+        days_diff = (datetime.now() - last_change).days
+        if days_diff == 0:
+            password_age = "Today"
+        elif days_diff == 1:
+            password_age = "1 day ago"
+        else:
+            password_age = f"{days_diff} days ago"
+    upgrade_target = get_next_upgrade_target(pid)
+    user_type = user['type'] if user else None
+    return render_template("auth_security_dashboard.html", user=user, auth_info=auth_info, mfa_methods=mfa_methods, history=history,user_type=user_type, password_age=password_age,upgrade_target=upgrade_target)
 @app.route('/auth/setup_mfa', methods=['GET','POST'])
 @auth_required
 def auth_setup_mfa():
     sid = request.cookies.get('session_id')
     pid = validate_session(sid)[2]
     force = session.pop('force_mfa_setup', False)
-    
-    # جلب نوع المستخدم من قاعدة البيانات
     with get_db_connection() as conn_main:
         user = conn_main.execute("SELECT type FROM People WHERE id=?", (pid,)).fetchone()
         user_type = user[0] if user else None
+    preselected = request.args.get('method')
+    
+    # NEW: Auto-enable Email OTP if requested via URL parameter
+    if request.method == 'GET' and preselected == 'otp':
+        conn = get_db_connection('auth.db')
+        conn.execute("INSERT INTO MFASecrets (person_id, method_type, secret, verified, created_at) VALUES (?,?,?,1,?)",
+                     (pid, 'email_otp', 'no_secret_needed', datetime.now().isoformat()))
+        conn.commit()
+        conn.close()
+        upgrade_auth_level_if_needed(pid)
+        flash("Email OTP has been enabled. Your security level has been upgraded to L2.", "success")
+        return redirect(url_for('auth_security_dashboard'))
     
     if request.method == 'POST':
         method = request.form.get('method')
@@ -1081,8 +1155,44 @@ def auth_setup_mfa():
             return render_template("auth_setup_totp.html", secret=secret, qr_code=qr_code, force=force)
         elif method == 'security_question':
             return render_template("auth_setup_security.html", questions=AuthConfig.SECURITY_QUESTIONS, force=force)
-    
-    return render_template("auth_setup_mfa.html", force=force, user_type=user_type)
+        elif method == 'otp':
+            # This case is for POST from a possible form (though we now auto-handle GET)
+            conn = get_db_connection('auth.db')
+            conn.execute("INSERT INTO MFASecrets (person_id, method_type, secret, verified, created_at) VALUES (?,?,?,1,?)",
+                         (pid, 'email_otp', 'no_secret_needed', datetime.now().isoformat()))
+            conn.commit()
+            conn.close()
+            upgrade_auth_level_if_needed(pid)
+            flash("Email OTP has been enabled. Your level has been upgraded if possible.", "success")
+            return redirect(url_for('auth_security_dashboard'))
+    return render_template("auth_setup_mfa.html", force=force, user_type=user_type, preselected=preselected)
+@app.route('/auth/upgrade_level')
+@auth_required
+def upgrade_level():
+    """Redirect user to setup the required MFA method for next level"""
+    sid = request.cookies.get('session_id')
+    sess = validate_session(sid)
+    pid = sess[2]
+    upgrade = get_next_upgrade_target(pid)
+    if not upgrade:
+        flash("You are already at the maximum allowed level.", "info")
+        return redirect(url_for('auth_security_dashboard'))
+    target = upgrade['target']
+    required = upgrade['required_mfa']
+    flash(f"To upgrade to {target}, please set up {required.upper()}.", "warning")
+
+    # Handle special case for IT Admin requiring both TOTP and security questions
+    if required == 'totp_and_security':
+        # Redirect to TOTP setup, after which we will automatically redirect to security questions
+        session['upgrade_to_l4'] = True
+        return redirect(url_for('auth_setup_mfa', method='totp'))
+    elif required == 'email_otp':
+        return redirect(url_for('auth_setup_mfa', method='otp'))
+    elif required == 'totp':
+        return redirect(url_for('auth_setup_mfa', method='totp'))
+    elif required == 'security_question':
+        return redirect(url_for('auth_setup_mfa', method='security_question'))
+    return redirect(url_for('auth_security_dashboard'))
 
 @app.route('/auth/verify_totp', methods=['POST'])
 @auth_required
@@ -1103,7 +1213,8 @@ def auth_verify_totp():
         conn.commit()
         new_level = upgrade_auth_level_if_needed(pid)
         conn.close()
-        if force:
+        # If this upgrade is part of IT Admin's path to L4, redirect to security questions
+        if session.pop('upgrade_to_l4', False) or force:
             return redirect(url_for('auth_setup_mfa', method='security_question', force=True))
         return render_template("auth_backup_codes.html", backup_codes=backup, new_level=new_level)
     conn.close()
@@ -1175,9 +1286,9 @@ def admin_login_history():
 # ======================== RUN ========================
 if __name__ == "__main__":
     init_dbs()
-    print("="*70)
+    print("=" * 70)
     print("University Identity & Access Management System")
     print("Running at http://127.0.0.1:5000")
     print("Admin login required for some features (IT Admin type)")
-    print("="*70)
+    print("=" * 70)
     app.run(debug=True, host="0.0.0.0", port=5000)

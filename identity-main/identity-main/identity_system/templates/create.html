@@ -74,6 +74,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .form-row {
@@ -177,6 +178,17 @@
         .level-L3 { background: #fed7aa; color: #9c4221; }
         .level-L4 { background: #fed7d7; color: #c53030; }
         
+        .mandatory-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            background: #e53e3e;
+            color: white;
+            margin-left: 8px;
+        }
+        
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -237,43 +249,7 @@
                         <div class="form-group">
                             <label>Sub Category <span class="required">*</span></label>
                             <select name="sub_category" id="subCategory" required>
-                                <option value="">Select Sub Category</option>
-                                <optgroup label="🎓 Students">
-                                    <option value="Undergraduate">Undergraduate (Bachelor)</option>
-                                    <option value="Continuing Education">Continuing Education</option>
-                                    <option value="PhD Candidates">PhD Candidates</option>
-                                    <option value="International/Exchange">International/Exchange</option>
-                                </optgroup>
-                                <optgroup label="👨‍🏫 Faculty">
-                                    <option value="Tenured">Tenured Professor</option>
-                                    <option value="Adjunct/Part-time">Adjunct/Part-time</option>
-                                    <option value="Visiting Researchers">Visiting Researcher</option>
-                                </optgroup>
-                                <optgroup label="👔 Admin Staff">
-                                    <option value="Administrative">Administrative Staff</option>
-                                    <option value="Technical">Technical Staff</option>
-                                    <option value="Temporary">Temporary Staff</option>
-                                    <option value="HR/Payroll">HR/Payroll Staff</option>
-                                </optgroup>
-                                <optgroup label="🛡️ IT Admin">
-                                    <option value="System Administrator">System Administrator</option>
-                                    <option value="Network Administrator">Network Administrator</option>
-                                    <option value="Security Administrator">Security Administrator</option>
-                                </optgroup>
-                                <optgroup label="🔬 Researcher">
-                                    <option value="Postdoctoral">Postdoctoral Researcher</option>
-                                    <option value="Senior Researcher">Senior Researcher</option>
-                                    <option value="Research Assistant">Research Assistant</option>
-                                    <option value="Grant Funded">Grant Funded Researcher</option>
-                                </optgroup>
-                                <optgroup label="📄 Contractor">
-                                    <option value="External Contractor">External Contractor</option>
-                                    <option value="Consultant">Consultant</option>
-                                    <option value="Vendor">Vendor</option>
-                                </optgroup>
-                                <optgroup label="🤝 External">
-                                    <option value="Alumni">Alumni</option>
-                                </optgroup>
+                                <option value="">-- Select User Type First --</option>
                             </select>
                             <div class="info-text">Select the appropriate sub-category</div>
                         </div>
@@ -336,7 +312,19 @@
                 
                 <!-- ==================== STUDENT SPECIFIC FIELDS ==================== -->
                 <div class="form-section dynamic-fields" id="studentFields">
-                    <h3>🎓 Student Information <span class="auth-level-badge level-L1">Default: L1</span></h3>
+                    <h3>🎓 Student Information 
+                        <span class="auth-level-badge level-L1">Default: L1</span>
+                        <span class="auth-level-badge level-L2">Can upgrade to L2</span>
+                    </h3>
+                    
+                    <div class="form-group">
+                        <label>Student Type</label>
+                        <select name="student_type" id="studentType">
+                            <option value="Domestic">Domestic Student</option>
+                            <option value="International">International Student <span class="mandatory-badge">L2 Mandatory</span></option>
+                        </select>
+                        <div class="info-text">International students require L2 authentication (mandatory)</div>
+                    </div>
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -392,7 +380,6 @@
                         <div class="form-group">
                             <label>Group/Class</label>
                             <input type="text" name="student_group" placeholder="e.g., Group A, Section 1">
-                            <div class="info-text">Optional: Class or group assignment</div>
                         </div>
                         <div class="form-group">
                             <label>Scholarship Status</label>
@@ -406,7 +393,10 @@
                 
                 <!-- ==================== FACULTY SPECIFIC FIELDS ==================== -->
                 <div class="form-section dynamic-fields" id="facultyFields">
-                    <h3>👨‍🏫 Faculty Information <span class="auth-level-badge level-L2">Default: L2</span></h3>
+                    <h3>👨‍🏫 Faculty Information 
+                        <span class="auth-level-badge level-L2">Default: L2</span>
+                        <span class="auth-level-badge level-L3">Can upgrade to L3</span>
+                    </h3>
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -443,7 +433,6 @@
                     <div class="form-group">
                         <label>Secondary Departments</label>
                         <input type="text" name="faculty_secondary_departments" placeholder="Separate multiple departments with commas">
-                        <div class="info-text">Optional: Additional departments where faculty teaches</div>
                     </div>
                     
                     <div class="form-row">
@@ -469,7 +458,6 @@
                     <div class="form-group">
                         <label>Research Areas</label>
                         <textarea name="faculty_research_areas" rows="2" placeholder="e.g., Artificial Intelligence, Machine Learning, Data Science"></textarea>
-                        <div class="info-text">Separate multiple areas with commas</div>
                     </div>
                     
                     <div class="form-row">
@@ -479,15 +467,14 @@
                                 <option value="No">No</option>
                                 <option value="Yes">Yes</option>
                             </select>
-                            <div class="info-text">Ability to supervise PhD students</div>
                         </div>
                         <div class="form-group">
                             <label>Department Head?</label>
-                            <select name="faculty_is_department_head">
+                            <select name="faculty_is_department_head" id="facultyIsDeptHead">
                                 <option value="No">No</option>
-                                <option value="Yes">Yes (Requires L3 Authentication)</option>
+                                <option value="Yes">Yes <span class="mandatory-badge">L3 Mandatory</span></option>
                             </select>
-                            <div class="info-text">Department heads have higher security level</div>
+                            <div class="info-text">Department heads automatically get L3 authentication</div>
                         </div>
                     </div>
                     
@@ -513,13 +500,15 @@
                     <div class="form-group">
                         <label>Teaching Hours (per semester)</label>
                         <input type="number" name="faculty_teaching_hours" min="0" step="1" placeholder="e.g., 120">
-                        <div class="info-text">Total teaching hours per semester</div>
                     </div>
                 </div>
                 
                 <!-- ==================== ADMIN STAFF SPECIFIC FIELDS ==================== -->
                 <div class="form-section dynamic-fields" id="adminStaffFields">
-                    <h3>👔 Admin Staff Information <span class="auth-level-badge level-L2">Default: L2</span></h3>
+                    <h3>👔 Admin Staff Information 
+                        <span class="auth-level-badge level-L2">Default: L2</span>
+                        <span class="auth-level-badge level-L3">Can upgrade to L3</span>
+                    </h3>
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -536,7 +525,6 @@
                         <div class="form-group">
                             <label>Grade/Level</label>
                             <input type="text" name="staff_grade" placeholder="e.g., Grade 10, Level 5">
-                            <div class="info-text">Optional: Staff grade or level</div>
                         </div>
                         <div class="form-group">
                             <label>Date of Entry to University <span class="required">*</span></label>
@@ -546,17 +534,19 @@
                     
                     <div class="form-group">
                         <label>HR/Payroll Staff?</label>
-                        <select name="staff_is_hr_payroll">
+                        <select name="staff_is_hr_payroll" id="staffIsHR">
                             <option value="No">No</option>
-                            <option value="Yes">Yes (Requires L3 Authentication)</option>
+                            <option value="Yes">Yes <span class="mandatory-badge">L3 Mandatory</span></option>
                         </select>
-                        <div class="info-text">HR and Payroll staff require higher security level (L3)</div>
+                        <div class="info-text">HR and Payroll staff automatically get L3 authentication</div>
                     </div>
                 </div>
                 
                 <!-- ==================== IT ADMIN SPECIFIC FIELDS ==================== -->
                 <div class="form-section dynamic-fields" id="itAdminFields">
-                    <h3>🛡️ IT Admin Information <span class="auth-level-badge level-L4">Default: L4 (Critical)</span></h3>
+                    <h3>🛡️ IT Admin Information 
+                        <span class="auth-level-badge level-L4">L4 (Critical) - Mandatory</span>
+                    </h3>
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -584,18 +574,16 @@
                     </div>
                     
                     <div class="info-text" style="background: #fef3c7; padding: 12px; border-radius: 10px; margin-top: 10px;">
-                        <strong>⚠️ Note:</strong> IT Admins have L4 (Critical) authentication level. They require:
-                        <ul style="margin-top: 8px; margin-left: 20px;">
-                            <li>Password + Email OTP + TOTP + Security Questions</li>
-                            <li>Full system access</li>
-                            <li>Can view audit logs and unlock accounts</li>
-                        </ul>
+                        <strong>⚠️ Note:</strong> IT Admins have L4 (Critical) authentication level.
                     </div>
                 </div>
                 
                 <!-- ==================== RESEARCHER SPECIFIC FIELDS ==================== -->
                 <div class="form-section dynamic-fields" id="researcherFields">
-                    <h3>🔬 Researcher Information <span class="auth-level-badge level-L2">Default: L2</span></h3>
+                    <h3>🔬 Researcher Information 
+                        <span class="auth-level-badge level-L2">Default: L2</span>
+                        <span class="auth-level-badge level-L3">Grant-funded: L3 Mandatory</span>
+                    </h3>
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -611,11 +599,11 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Grant Funded?</label>
-                            <select name="researcher_grant_funded">
-                                <option value="No">No</option>
-                                <option value="Yes">Yes (Requires L3 Authentication)</option>
+                            <select name="researcher_grant_funded" id="researcherGrantFunded">
+                                <option value="No">No (L2)</option>
+                                <option value="Yes">Yes <span class="mandatory-badge">L3 Mandatory</span></option>
                             </select>
-                            <div class="info-text">Grant-funded researchers have higher security level (L3)</div>
+                            <div class="info-text">Grant-funded researchers automatically get L3 authentication</div>
                         </div>
                         <div class="form-group">
                             <label>Biometric Access Required?</label>
@@ -625,16 +613,14 @@
                             </select>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label>Publications</label>
-                        <textarea name="researcher_publications" rows="2" placeholder="List key publications (optional)"></textarea>
-                    </div>
                 </div>
                 
                 <!-- ==================== CONTRACTOR SPECIFIC FIELDS ==================== -->
                 <div class="form-section dynamic-fields" id="contractorFields">
-                    <h3>📄 Contractor Information <span class="auth-level-badge level-L1">Default: L1</span></h3>
+                    <h3>📄 Contractor Information 
+                        <span class="auth-level-badge level-L1">Default: L1</span>
+                        <span class="auth-level-badge level-L2">Can request L2</span>
+                    </h3>
                     
                     <div class="form-row">
                         <div class="form-group">
@@ -656,21 +642,20 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Contract Start Date</label>
-                            <input type="date" name="contractor_start_date">
+                            <input type="date" name="contractor_start_date" id="contractorStartDate">
                         </div>
                         <div class="form-group">
                             <label>Contract End Date</label>
-                            <input type="date" name="contractor_end_date">
+                            <input type="date" name="contractor_end_date" id="contractorEndDate">
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label>Request L2 Upgrade?</label>
                         <select name="contractor_request_upgrade">
-                            <option value="No">No</option>
-                            <option value="Yes">Yes (Requires Approval)</option>
+                            <option value="No">No (Stay L1)</option>
+                            <option value="Yes">Yes (Request L2 Upgrade - Requires Approval)</option>
                         </select>
-                        <div class="info-text">Contractors can request upgrade to L2 (Standard) with approval</div>
                     </div>
                     
                     <div class="info-text" style="background: #fef3c7; padding: 12px; border-radius: 10px; margin-top: 10px;">
@@ -684,6 +669,42 @@
     </div>
     
     <script>
+        // تعريف خيارات SubCategory لكل User Type (هاد التغيير الكبير)
+        const subCategoryOptions = {
+            'Student': [
+                { value: 'Undergraduate', label: '🎓 Undergraduate (Bachelor)' },
+                { value: 'Continuing Education', label: '📚 Continuing Education' },
+                { value: 'PhD Candidates', label: '🔬 PhD Candidates' },
+                { value: 'International/Exchange', label: '🌍 International/Exchange' }
+            ],
+            'Faculty': [
+                { value: 'Tenured', label: '👨‍🏫 Tenured Professor' },
+                { value: 'Adjunct/Part-time', label: '⏰ Adjunct/Part-time' },
+                { value: 'Visiting Researchers', label: '✈️ Visiting Researcher' }
+            ],
+            'Admin Staff': [
+                { value: 'Administrative', label: '📋 Administrative Staff' },
+                { value: 'Technical', label: '💻 Technical Staff' },
+                { value: 'Temporary', label: '📅 Temporary Staff' }
+            ],
+            'IT Admin': [
+                { value: 'System Administrator', label: '🖥️ System Administrator' },
+                { value: 'Network Administrator', label: '🌐 Network Administrator' },
+                { value: 'Security Administrator', label: '🔒 Security Administrator' }
+            ],
+            'Researcher': [
+                { value: 'Postdoctoral', label: '🔬 Postdoctoral Researcher' },
+                { value: 'Senior Researcher', label: '⭐ Senior Researcher' },
+                { value: 'Research Assistant', label: '🤝 Research Assistant' },
+                { value: 'Grant Funded', label: '💰 Grant Funded Researcher' }
+            ],
+            'Contractor': [
+                { value: 'External Contractor', label: '🏢 External Contractor' },
+                { value: 'Consultant', label: '💼 Consultant' },
+                { value: 'Vendor', label: '📦 Vendor' }
+            ]
+        };
+        
         // DOM Elements
         const userTypeSelect = document.getElementById('userType');
         const subCategorySelect = document.getElementById('subCategory');
@@ -703,6 +724,27 @@
         const itadminRequired = document.querySelectorAll('.itadmin-required');
         const researcherRequired = document.querySelectorAll('.researcher-required');
         const contractorRequired = document.querySelectorAll('.contractor-required');
+        
+        // دالة لتحديث خيارات Sub Category (التغيير الرئيسي)
+        function updateSubCategoryOptions() {
+            const selectedUserType = userTypeSelect.value;
+            
+            // مسح الخيارات الحالية
+            subCategorySelect.innerHTML = '<option value="">-- Select Sub Category --</option>';
+            
+            if (selectedUserType && subCategoryOptions[selectedUserType]) {
+                subCategorySelect.disabled = false;
+                subCategoryOptions[selectedUserType].forEach(option => {
+                    const optElement = document.createElement('option');
+                    optElement.value = option.value;
+                    optElement.textContent = option.label;
+                    subCategorySelect.appendChild(optElement);
+                });
+            } else {
+                subCategorySelect.disabled = true;
+                subCategorySelect.innerHTML = '<option value="">-- Select User Type First --</option>';
+            }
+        }
         
         function updateDynamicFields() {
             const userType = userTypeSelect.value;
@@ -753,12 +795,19 @@
             });
         }
         
-        // Form validation
+        // Form validation (زدنا التحقق من Sub Category)
         function validateForm() {
             const userType = userTypeSelect.value;
             
             if (!userType) {
                 alert('Please select a user type');
+                return false;
+            }
+            
+            // التحقق من أن Sub Category تم اختياره
+            const subCategory = subCategorySelect.value;
+            if (!subCategory) {
+                alert('Please select a sub category');
                 return false;
             }
             
@@ -787,10 +836,17 @@
             }
         });
         
-        userTypeSelect.addEventListener('change', updateDynamicFields);
+        // ربط الحدث مع الدالتين معاً
+        userTypeSelect.addEventListener('change', function() {
+            updateSubCategoryOptions();
+            updateDynamicFields();
+        });
         
         // Initial update on page load
-        updateDynamicFields();
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSubCategoryOptions();
+            updateDynamicFields();
+        });
     </script>
 </body>
 </html>

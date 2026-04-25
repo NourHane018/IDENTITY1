@@ -114,6 +114,21 @@
         .level-L3 { background: #fed7aa; color: #9c4221; }
         .level-L4 { background: #fed7d7; color: #c53030; }
         
+        .btn-upgrade {
+            background: #48bb78;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-upgrade:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+        
         .table-container {
             overflow-x: auto;
         }
@@ -179,7 +194,41 @@
             </div>
         </div>
         
-        <!-- Current Authentication Level -->
+        <!-- 👤 My Profile Information (Read-Only) -->
+        <div class="card">
+            <h2>👤 My Profile Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value">{{ user.first_name }} {{ user.last_name }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Email Address</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">User Type</div>
+                    <div class="info-value">{{ user.type }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Sub Category</div>
+                    <div class="info-value">{{ user.sub_category if user.sub_category else '-' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Account Status</div>
+                    <div class="info-value">{{ user.status if user.status else 'Active' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Member Since</div>
+                    <div class="info-value">{{ user.created_at[:10] if user.created_at else '-' }}</div>
+                </div>
+            </div>
+            <div style="font-size: 12px; color: #718096; margin-top: 12px; text-align: center;">
+                ℹ️ This information is read-only. To modify your details, please contact the system administrator.
+            </div>
+        </div>
+        
+        <!-- 🔒 Current Authentication Level -->
         <div class="card">
             <h2>🔒 Current Authentication Level</h2>
             <div class="info-grid">
@@ -199,7 +248,21 @@
             </div>
         </div>
         
-        <!-- Password Age and Last Change -->
+        <!-- 🚀 Upgrade Level (if possible) -->
+        {% if upgrade_target %}
+        <div class="card" style="border: 2px solid #48bb78;">
+            <h2>🚀 Upgrade Your Security Level</h2>
+            <div class="info-item" style="background: #f0fff4; border-left-color: #48bb78;">
+                <div class="info-label">Next Level: {{ upgrade_target.target }}</div>
+                <div class="info-value" style="margin-bottom: 15px;">
+                    {{ upgrade_target.message }}
+                </div>
+                <a href="/auth/upgrade_level" class="btn-upgrade">🔝 Upgrade Level</a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- ⏰ Password Information -->
         <div class="card">
             <h2>⏰ Password Information</h2>
             <div class="info-grid">
@@ -222,7 +285,7 @@
             </div>
         </div>
         
-        <!-- Login History Timeline -->
+        <!-- 🕐 Login History Timeline -->
         <div class="card">
             <h2>🕐 Login History Timeline</h2>
             <div class="table-container">
